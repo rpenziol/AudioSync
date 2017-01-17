@@ -3,19 +3,23 @@ import os
 import shutil
 import watchdog
 import logging
+import converter
 
-input_dir = '/home/robbie/Music/'
-output_dir = '/home/robbie/Documents/test/'
+source_dir = '/home/robbie/Music/'
+dest_dir = '/home/robbie/Documents/test/'
+options = {
+    format: 'mp3'
+}
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger()
 
-for root, dirs, files_junk in os.walk(input_dir, topdown=True):
+for root, dirs, files_junk in os.walk(source_dir, topdown=True):
     for directory in dirs:
-        rel_root = root.replace(input_dir, '')
+        rel_root = root.replace(source_dir, '')
         rel_path = os.path.join(rel_root, directory)
-        input_path = os.path.join(input_dir, rel_path)
-        output_path = os.path.join(output_dir, rel_path)
+        input_path = os.path.join(source_dir, rel_path)
+        output_path = os.path.join(dest_dir, rel_path)
 
         # Create directory
         if not os.path.exists(output_path):
@@ -30,21 +34,18 @@ for root, dirs, files_junk in os.walk(input_dir, topdown=True):
             log.debug("Directory '%s' already exist. Skipping directory creation." % (output_path))
 
         # Convert files in current directory
-        for root_junk, dirs_junk, files in os.walk(input_path, topdown=True):
-            for file in files:
-                input_file = os.path.join(input_path, file)
-                output_file = os.path.join(output_path, file)
+        for item in os.listdir(input_path):
+            if not os.path.isfile(os.path.join(input_path, item)):
+                log.debug("'%s' is a directory. Skipping conversion." % (item))
+                continue
 
-                if not os.path.isfile(output_file):
-                    log.info("File '%s' does't exist. Converting input file." % (output_file))
-                    try:
-                        shutil.copy2(input_file, output_file)
-                        print("Conversion code goes here.")
-                        
-                        # ff = ffmpy.FFmpeg(inputs={input_file: None}, outputs={output_file + '.mp3': '-ab 320k'})
-                        # ff.run()
-                    except Exception as e:
-                        print(e)
-                        log.warning("Insufficient priveledges to create directory '%s'." % (output_file))
-                else:
-                    log.debug("Directory '%s' already exist. Skipping file conversion." % (output_file))
+            # Create full file path for input and output
+            base_filename, input_extension = os.path.splitext(item)
+            input_file = os.path.join(input_path, item)
+            output_file = os.path.join(output_path, item)
+
+            if input_extension == '.flac':
+                output_filename = base_filename + '.' + options[format]
+                output_file = os.path.join(output_path, output_filename)
+
+            converter.convert(input_file, output_file, options)
