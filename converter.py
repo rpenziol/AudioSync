@@ -3,9 +3,15 @@ import logging
 import shutil
 import ffmpy
 logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
-def convert(input_file = '', output_file = '', options = {}):
+
+'''Use FFmpeg wrapper to convert file from input_file to output_file destination.
+Grab formatting options from 'options' JSON
+'''
+
+
+def convert(input_file='', output_file='', options=None):
     input_file_base, input_extension = os.path.splitext(input_file)
 
     # Check if file exists
