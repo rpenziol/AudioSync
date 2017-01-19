@@ -1,5 +1,6 @@
 import os
 import converter
+import shutil
 import logging
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -38,7 +39,11 @@ def tree_scanner(source_dir='', dest_dir='', options=None):
 Depending on file type, copy or convert file from input_path to output_path
 '''
 
+
 def dir_scanner(input_path='', output_path='', options=None):
+        # Remove orphaned folder trees from output_path
+        remove_orphan_dirs(input_path, output_path)
+
         # Convert files in current directory
         for item in os.listdir(input_path):
             if not os.path.isfile(os.path.join(input_path, item)):
@@ -55,3 +60,22 @@ def dir_scanner(input_path='', output_path='', options=None):
                 output_file = os.path.join(output_path, output_filename)
 
             converter.convert(input_file, output_file, options)
+
+
+''' Remove folder trees from output_path if folder isn't in input_path'''
+
+
+def remove_orphan_dirs(input_path='', output_path=''):
+
+    for item in os.listdir(output_path):
+        # If item is a directory
+        if not os.path.isfile(os.path.join(output_path, item)):
+            # If directory is orphaned
+            if not os.path.exists(os.path.join(input_path, item)):
+
+                log.debug("'{0}' is an orphaned directory. Removing from '{1}'.".format(item, output_path))
+                try:
+                    shutil.rmtree(os.path.join(output_path, item))
+                except Exception as e:
+                    print(e)
+                    log.warning("Failed to remove folder '{0}'.".format(os.path.join(output_path, item)))
