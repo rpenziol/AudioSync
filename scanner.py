@@ -1,6 +1,7 @@
 import os
 import converter
 import shutil
+import database
 import logging
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -12,6 +13,8 @@ Creates missing directories in destination folder, and calls dir_scanner to sync
 
 
 def tree_scanner(source_dir='', dest_dir='', options=None):
+    db_name = database.load_database(source_dir)
+
     for root, dirs, files_junk in os.walk(source_dir, topdown=True):
         for directory in dirs:
             rel_root = root.replace(source_dir, '')
@@ -26,13 +29,12 @@ def tree_scanner(source_dir='', dest_dir='', options=None):
                     os.makedirs(output_path)
                 except Exception as e:
                     print(e)
-                    log.warning("Insufficient priveledges to create directory '%s'." % (output_path))
+                    log.warning("Insufficient privileges to create directory '%s'." % (output_path))
 
             else:
                 log.debug("Directory '%s' already exist. Skipping directory creation." % (output_path))
 
             dir_scanner(input_path, output_path, options)
-
 
 
 ''' Compares files between input and output paths.
@@ -41,7 +43,7 @@ Depending on file type, copy or convert file from input_path to output_path
 
 
 def dir_scanner(input_path='', output_path='', options=None):
-        # Remove orphaned folder trees from output_path
+        # Remove orphaned files and folder trees from output_path
         remove_orphan_dirs(input_path, output_path)
         remove_orphan_files(input_path, output_path)
 
