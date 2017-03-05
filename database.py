@@ -30,4 +30,4 @@ def load_database(source_path=None):
 
     db_full_path = os.path.join(db_dir, db_name)
     db = UnQLite(db_full_path)
-    exit()
+    return db

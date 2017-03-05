@@ -3,7 +3,8 @@ import scanner
 source_dir = '/home/robbie/Music/'
 dest_dir = '/home/robbie/Documents/test/'
 options = {
-    format: 'mp3'
+    'format': 'mp3',
+    'bitrate': 320
 }
 
 

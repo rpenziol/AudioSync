@@ -13,7 +13,7 @@ Creates missing directories in destination folder, and calls dir_scanner to sync
 
 
 def tree_scanner(source_dir='', dest_dir='', options=None):
-    db_name = database.load_database(source_dir)
+    db = database.load_database(source_dir)
 
     for root, dirs, files_junk in os.walk(source_dir, topdown=True):
         for directory in dirs:
@@ -34,7 +34,9 @@ def tree_scanner(source_dir='', dest_dir='', options=None):
             else:
                 log.debug("Directory '%s' already exist. Skipping directory creation." % (output_path))
 
-            dir_scanner(input_path, output_path, options)
+            dir_scanner(input_path, output_path, db, options)
+
+    db.close()
 
 
 ''' Compares files between input and output paths.
@@ -42,7 +44,7 @@ Depending on file type, copy or convert file from input_path to output_path
 '''
 
 
-def dir_scanner(input_path='', output_path='', options=None):
+def dir_scanner(input_path='', output_path='', db='', options=None):
         # Remove orphaned files and folder trees from output_path
         remove_orphan_dirs(input_path, output_path)
         remove_orphan_files(input_path, output_path)
@@ -59,10 +61,10 @@ def dir_scanner(input_path='', output_path='', options=None):
             output_file = os.path.join(output_path, item)
 
             if input_extension == '.flac':
-                output_filename = base_filename + '.' + options[format]
+                output_filename = base_filename + '.' + options['format']
                 output_file = os.path.join(output_path, output_filename)
 
-            converter.convert(input_file, output_file, options)
+            converter.convert(input_file, output_file, db, options)
 
 
 ''' Remove folder trees from output_path if folder isn't in input_path'''
