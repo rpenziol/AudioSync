@@ -1,12 +1,16 @@
 import scanner
+import configparser
+from os.path import expanduser
 
-source_dir = '/home/robbie/Music/'
-dest_dir = '/home/robbie/Documents/test/'
+config = configparser.ConfigParser()
+config.read('config/config.ini')
+
+source_dir = expanduser(config['PATH']['input'])
+dest_dir = expanduser(config['PATH']['output'])
 options = {
-    'format': 'mp3',
-    'bitrate': 320
+    'format': config['AUDIO']['format'],
+    'bitrate': config['AUDIO']['bitrate']
 }
-
 
 def main():
     scanner.tree_scanner(source_dir, dest_dir, options)

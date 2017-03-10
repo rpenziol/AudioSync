@@ -41,7 +41,7 @@ def convert(input_file='', output_file='', db='', options=None):
     # Simply copy non-audio files
     if input_extension != '.flac':
         try:
-            log.info("Copying '%s' to '%s'." % (input_file, output_file))
+            log.info("Copying '%s' to '%s'" % (input_file, output_file))
             shutil.copy2(input_file, output_file)
         except Exception as e:
             print(e)
@@ -50,7 +50,8 @@ def convert(input_file='', output_file='', db='', options=None):
 
     # Do the conversion
     try:
-        command = 'ffmpeg -i ' + shlex.quote(input_file) + ' -ab 320k -map_metadata 0 -id3v2_version 3 ' + shlex.quote(output_file)
+        log.info("Converting file '%s'." % input_file)
+        command = 'ffmpeg -i ' + shlex.quote(input_file) + ' -ab 320k -map_metadata 0 -id3v2_version 3 ' + shlex.quote(output_file) + '>/dev/null 2>&1'
         os.system(command)
 
     except Exception as e:

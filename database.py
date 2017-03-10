@@ -15,7 +15,7 @@ def load_database(source_path=None):
     # Use MD5 of source_path to establish database name
     db_name = hashlib.md5(str(source_path).encode('utf-8')).hexdigest()
     current_path = os.path.dirname(os.path.realpath(__file__))
-    db_dir = os.path.join(current_path, 'DB')
+    db_dir = os.path.join(current_path, 'db')
 
     # Create directory for databases
     if not os.path.exists(db_dir):

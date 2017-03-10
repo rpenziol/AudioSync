@@ -13,6 +13,10 @@ Creates missing directories in destination folder, and calls dir_scanner to sync
 
 
 def tree_scanner(source_dir='', dest_dir='', options=None):
+    if not os.path.exists(source_dir):
+        log.fatal("Source directory '%s' doesn't exist. Exiting." % source_dir)
+        exit()
+
     db = database.load_database(source_dir)
 
     for root, dirs, files_junk in os.walk(source_dir, topdown=True):
