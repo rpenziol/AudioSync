@@ -12,8 +12,9 @@ options = {
     'bitrate': config['AUDIO']['bitrate']
 }
 
+
 def main():
-    scanner.tree_scanner(source_dir, dest_dir, options)
+    scanner.Scanner(source_dir, dest_dir, options)
 
 if __name__ == "__main__":
     main()
