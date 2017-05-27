@@ -12,14 +12,14 @@ Grab formatting options from 'options' JSON
 '''
 
 
-def convert(input_file='', output_file='', db='', options=None):
+def convert(input_file='', output_file='', db=None, options=None):
     input_file_base, input_extension = os.path.splitext(input_file)
     input_file_md5 = hashlib.md5(open(input_file, 'rb').read()).hexdigest()
     hash_match = False
 
     # Check if file hash is in the database
     try:
-        if db[input_file] == input_file_md5:
+        if db.select(input_file) == input_file_md5:
             hash_match = True
     except Exception as e:
         log.debug(e)
@@ -36,7 +36,7 @@ def convert(input_file='', output_file='', db='', options=None):
         os.remove(output_file)
 
     # Store/update hash
-    db[input_file] = input_file_md5
+    db.insert(input_file, input_file_md5)
 
     # Simply copy non-audio files
     if input_extension != '.flac':
