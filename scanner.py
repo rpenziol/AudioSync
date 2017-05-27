@@ -13,19 +13,19 @@ class Scanner(object):
     source_dir = None
     dest_dis = None
     options = None
+    converter = None
     db = None
 
     def __init__(self, source_dir, dest_dis, options):
         self.source_dir = source_dir
         self.dest_dis = dest_dis
         self.options = options
+        self.converter = converter.Converter(options)
         self.db = database.Database(source_dir)
         self.tree_scanner(source_dir, dest_dis)
 
     ''' Recursively scans input directory structure and compares to the destination folder tree.
-    Creates missing directories in destination folder, and calls dir_scanner to sync files
-    '''
-
+    Creates missing directories in destination folder, and calls dir_scanner to sync files '''
     def tree_scanner(self, source_dir='', dest_dir=''):
         if not os.path.exists(source_dir):
             log.fatal("Source directory '%s' doesn't exist. Exiting." % source_dir)
@@ -40,21 +40,20 @@ class Scanner(object):
 
                 # Create directory
                 if not os.path.exists(output_path):
-                    log.info("Directory '%s' does't exist. Creating directory" % (output_path))
+                    log.info("Directory '%s' does't exist. Creating directory" % output_path)
                     try:
                         os.makedirs(output_path)
                     except Exception as e:
                         print(e)
-                        log.warning("Insufficient privileges to create directory '%s'." % (output_path))
+                        log.warning("Insufficient privileges to create directory '%s'." % output_path)
 
                 else:
-                    log.debug("Directory '%s' already exist. Skipping directory creation." % (output_path))
+                    log.debug("Directory '%s' already exist. Skipping directory creation." % output_path)
 
                 self.dir_scanner(input_path, output_path)
 
     ''' Compares files between input and output paths.
-    Depending on file type, copy or convert file from input_path to output_path
-    '''
+    Depending on file type, copy or convert file from input_path to output_path '''
     def dir_scanner(self, input_path='', output_path=''):
             # Remove orphaned files and folder trees from output_path
             self.remove_orphan_dirs(input_path, output_path)
@@ -63,7 +62,7 @@ class Scanner(object):
             # Convert files in current directory
             for item in os.listdir(input_path):
                 if not os.path.isfile(os.path.join(input_path, item)):
-                    log.debug("'%s' is a directory. Skipping conversion." % (item))
+                    log.debug("'%s' is a directory. Skipping conversion." % item)
                     continue
 
                 # Create full file path for input and output
@@ -75,11 +74,10 @@ class Scanner(object):
                     output_filename = base_filename + '.' + self.options['format']
                     output_file = os.path.join(output_path, output_filename)
 
-                converter.convert(input_file, output_file, self.db, self.options)
+                self.converter.convert(input_file, output_file, self.db)
 
     ''' Remove folder trees from output_path if folder isn't in input_path'''
     def remove_orphan_dirs(self, input_path='', output_path=''):
-
         for item in os.listdir(output_path):
             # If item is a directory
             if not os.path.isfile(os.path.join(output_path, item)):
