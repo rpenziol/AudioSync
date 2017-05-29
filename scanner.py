@@ -19,13 +19,13 @@ class Scanner(object):
     def __init__(self, source_dir, dest_dis, options):
         self.source_dir = source_dir
         self.dest_dis = dest_dis
-        self.options = options
-        self.converter = converter.Converter(options)
         self.db = database.Database(source_dir)
+        self.options = options
+        self.converter = converter.Converter(self.db, self.options)
         self.tree_scanner(source_dir, dest_dis)
 
     ''' Recursively scans input directory structure and compares to the destination folder tree.
-    Creates missing directories in destination folder, and calls dir_scanner to sync files '''
+    Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
     def tree_scanner(self, source_dir='', dest_dir=''):
         if not os.path.exists(source_dir):
             log.fatal("Source directory '%s' doesn't exist. Exiting." % source_dir)
@@ -51,6 +51,8 @@ class Scanner(object):
                     log.debug("Directory '%s' already exist. Skipping directory creation." % output_path)
 
                 self.dir_scanner(input_path, output_path)
+        # Make the magic happen
+        self.converter.process_queue()
 
     ''' Compares files between input and output paths.
     Depending on file type, copy or convert file from input_path to output_path '''
@@ -74,7 +76,9 @@ class Scanner(object):
                     output_filename = base_filename + '.' + self.options['format']
                     output_file = os.path.join(output_path, output_filename)
 
-                self.converter.convert(input_file, output_file, self.db)
+                self.converter.queue_job(input_file, output_file)
+                #self.converter.convert(input_file, output_file, self.db)
+
 
     ''' Remove folder trees from output_path if folder isn't in input_path'''
     def remove_orphan_dirs(self, input_path='', output_path=''):

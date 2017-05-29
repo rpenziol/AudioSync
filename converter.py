@@ -3,6 +3,7 @@ import logging
 import shutil
 import hashlib
 import shlex
+from multiprocessing import Pool
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
@@ -10,29 +11,36 @@ log = logging.getLogger(__name__)
 class Converter(object):
 
     # Attributes:
+    db = None
     options = {}
     queue = []
 
-    def __init__(self, options):
+    def __init__(self, db, options):
+        self.db = db
         self.options = options
 
-    def queue_job(self):
-        pass
+    def queue_job(self, input_file, output_file):
+        job = {
+            'input_file': input_file,
+            'output_file': output_file
+        }
+        self.queue.append(job)
 
     def process_queue(self):
+        pool = Pool(processes=1)
         for job in self.queue:
-            self.convert()
+            self.convert(job['input_file'], job['output_file'])
 
     ''' Use FFmpeg wrapper to convert file from fqfn_input to fqfn_output destination.
     Grab formatting options from options JSON '''
-    def convert(self, fqfn_input='', fqfn_output='', db=None):
+    def convert(self, fqfn_input='', fqfn_output=''):
         fqfn_input_base, input_extension = os.path.splitext(fqfn_input)
         fqfn_input_md5 = hashlib.md5(open(fqfn_input, 'rb').read()).hexdigest()
         hash_match = False
 
         # Check if file hash is in the database
         try:
-            if db.select(fqfn_input) == fqfn_input_md5:
+            if self.db.select(fqfn_input) == fqfn_input_md5:
                 hash_match = True
         except Exception as e:
             log.debug(e)
@@ -49,7 +57,7 @@ class Converter(object):
             os.remove(fqfn_output)
 
         # Store/update hash
-        db.insert(fqfn_input, fqfn_input_md5)
+        self.db.insert(fqfn_input, fqfn_input_md5)
 
         # Simply copy non-audio files
         if input_extension != '.flac':
