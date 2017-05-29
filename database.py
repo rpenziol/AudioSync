@@ -1,7 +1,7 @@
 import os.path
 import logging
 import hashlib
-from unqlite import UnQLite
+from tinydb import TinyDB, Query
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class Database(object):
             exit()
 
         # Use MD5 of source_path to establish database name
-        db_name = hashlib.md5(str(database_path).encode('utf-8')).hexdigest()
+        db_name = hashlib.md5(str(database_path).encode('utf-8')).hexdigest() + '.json'
         current_path = os.path.dirname(os.path.realpath(__file__))
         db_dir = os.path.join(current_path, 'db')
 
@@ -37,12 +37,23 @@ class Database(object):
             log.debug("Directory '%s' already exist. Skipping directory creation." % (db_dir))
 
         db_full_path = os.path.join(db_dir, db_name)
-        self.db = UnQLite(db_full_path)
+        self.db = TinyDB(db_full_path)
 
     ''' Take key/value pair and store / update value in database '''
-    def insert(self, key, value):
-        self.db[key] = value
+    def update(self, path='', hash=''):
+        file = Query()
+        # If file hash is present, update the hash
+        if self.db.count(file.path == path) >= 1:
+            self.db.update({'path': path, 'hash': hash}, file.path == path)
+        # Otherwise insert the hash for the 1st time
+        else:
+            self.db.insert({'path': path, 'hash': hash})
 
     ''' Lookup key in database, return value '''
-    def select(self, key):
-        return self.db[key]
+    def get_hash(self, path=''):
+        file_hash = ''
+        file = Query()
+        # Get hash if path in db, else return empty string
+        if self.db.count(file.path == path) >= 1:
+            file_hash = self.db.search(file.path == path)[0]['hash']
+        return file_hash

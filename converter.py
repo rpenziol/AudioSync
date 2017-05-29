@@ -40,7 +40,7 @@ class Converter(object):
 
         # Check if file hash is in the database
         try:
-            if self.db.select(fqfn_input) == fqfn_input_md5:
+            if self.db.get_hash(fqfn_input) == fqfn_input_md5:
                 hash_match = True
         except Exception as e:
             log.debug(e)
@@ -57,7 +57,7 @@ class Converter(object):
             os.remove(fqfn_output)
 
         # Store/update hash
-        self.db.insert(fqfn_input, fqfn_input_md5)
+        self.db.update(fqfn_input, fqfn_input_md5)
 
         # Simply copy non-audio files
         if input_extension != '.flac':
