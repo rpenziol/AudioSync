@@ -39,7 +39,7 @@ class Database(object):
         db_full_path = os.path.join(db_dir, db_name)
         self.db = TinyDB(db_full_path)
 
-    ''' Take key/value pair and store / update value in database '''
+    ''' Take key/value pair and store/update value in database '''
     def update(self, path='', hash=''):
         file = Query()
         # If file hash is present, update the hash
