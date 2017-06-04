@@ -6,6 +6,7 @@ import shlex
 from multiprocessing import Pool
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+options = {}
 
 
 def convert(job):
@@ -14,25 +15,26 @@ def convert(job):
     # Do the conversion
     try:
         log.info("Converting file '%s'." % fqfn_input)
-        command = 'ffmpeg -i ' + shlex.quote(fqfn_input) + ' -ab 320k -map_metadata 0 -id3v2_version 3 ' + \
-                  shlex.quote(fqfn_output) + '>/dev/null 2>&1'
+        command = 'ffmpeg -i ' + shlex.quote(fqfn_input) + ' -ab ' + shlex.quote(options['bitrate']) + 'k' \
+                  ' -map_metadata 0 -id3v2_version 3 ' + shlex.quote(fqfn_output) + '>/dev/null 2>&1'
         os.system(command)
         return
     except Exception as e:
         print(e)
-        log.warning("Insufficient privileges to write file: '%s'." % fqfn_output)
+        log.warning("Failed to convert file: '%s'." % fqfn_output)
+
 
 class Converter(object):
 
     # Attributes:
     db = None
-    options = {}
     files = []
     jobs = []
 
-    def __init__(self, db, options):
+    def __init__(self, db, init_options):
         self.db = db
-        self.options = options
+        global options
+        options = init_options
 
     def queue_job(self, input_file, output_file):
         file = {
@@ -79,7 +81,7 @@ class Converter(object):
                 self.db.update(fqfn_input, fqfn_input_md5)
 
             # Simply copy non-audio files
-            if input_extension != '.flac':
+            if input_extension.lstrip('.') not in options['extensions_to_convert']:
                 try:
                     log.info("Copying '%s' to '%s'" % (fqfn_input, fqfn_output))
                     shutil.copy2(fqfn_input, fqfn_output)

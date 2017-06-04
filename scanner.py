@@ -77,8 +77,6 @@ class Scanner(object):
                     output_file = os.path.join(output_path, output_filename)
 
                 self.converter.queue_job(input_file, output_file)
-                #self.converter.convert(input_file, output_file, self.db)
-
 
     ''' Remove folder trees from output_path if folder isn't in input_path'''
     def remove_orphan_dirs(self, input_path='', output_path=''):
