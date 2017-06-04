@@ -88,12 +88,12 @@ class Converter(object):
                     continue  # No need to add to convert queue
                 except Exception as e:
                     print(e)
-                    log.warning("Insufficient privileges to write file: '%s'." % fqfn_output)
+                    log.warning("Unable to copy file: '%s'." % fqfn_output)
 
             self.jobs.append(file)
         # End for
 
-        pool = Pool(processes=8)
+        pool = Pool(processes=options['thread_count'])
         pool.map(convert, self.jobs)
         pool.close()
         pool.join()
