@@ -7,21 +7,7 @@ from multiprocessing import Pool
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 options = {}
-
-
-def convert(job):
-    fqfn_input = job['input_file']
-    fqfn_output = job['output_file']
-    # Do the conversion
-    try:
-        log.info("Converting file '%s'." % fqfn_input)
-        command = 'ffmpeg -i ' + shlex.quote(fqfn_input) + ' -ab ' + shlex.quote(options['bitrate']) + 'k' \
-                  ' -map_metadata 0 -id3v2_version 3 ' + shlex.quote(fqfn_output) + '>/dev/null 2>&1'
-        os.system(command)
-        return
-    except Exception as e:
-        print(e)
-        log.warning("Failed to convert file: '%s'." % fqfn_output)
+ffmpeg_args = ''
 
 
 class Converter(object):
@@ -92,8 +78,87 @@ class Converter(object):
 
             self.jobs.append(file)
         # End for
+        global ffmpeg_args
+        ffmpeg_args = ffmpeg_arg_generator()
 
         pool = Pool(processes=options['thread_count'])
         pool.map(convert, self.jobs)
         pool.close()
         pool.join()
+
+
+'''Converts files using the command line and ffmpeg. Called in a pool as a multiprocess, meaning multiple copies
+of these function may run concurrently. Due to constraints of the multiprocessing pool, this function is only 
+allowed one input variable.'''
+
+
+def convert(job):
+    fqfn_input = job['input_file']
+    fqfn_output = job['output_file']
+    global ffmpeg_args
+
+    # Do the conversion
+    try:
+        log.info("Converting file '%s'." % fqfn_input)
+        command = 'ffmpeg -i ' + shlex.quote(fqfn_input) + ' ' + ffmpeg_args + ' ' + shlex.quote(fqfn_output)\
+                  + '>/dev/null 2>&1'
+        os.system(command)
+        return
+    except Exception as e:
+        print(e)
+        log.warning("Failed to convert file: '%s'." % fqfn_output)
+
+
+'''Using the globaloptions variable, this function will generate and return the proper ffmpeg
+command-line arguments based on the given codec / bitrate configuration'''
+
+
+def ffmpeg_arg_generator():
+    global options
+    ffmpeg_args = ''
+    bitrate = int(options['bitrate'])
+
+    if options['format'] == 'mp3':
+        if options['bitrate_type'] == 'cbr':
+            ffmpeg_args += '-b:a ' + options['bitrate'] + 'k'
+
+        if options['bitrate_type'] == 'vbr':
+            if bitrate >= 250:
+                quality = '0'
+            elif bitrate in range(210, 250):
+                quality = '1'
+            elif bitrate in range(180, 210):
+                quality = '2'
+            elif bitrate in range(165, 180):
+                quality = '3'
+            elif bitrate in range(145, 165):
+                quality = '4'
+            elif bitrate in range(125, 145):
+                quality = '5'
+            elif bitrate in range(107, 125):
+                quality = '6'
+            elif bitrate in range(93, 107):
+                quality = '7'
+            elif bitrate in range(70, 93):
+                quality = '8'
+            else:
+                quality = '9'
+            ffmpeg_args += '-q:a ' + quality
+
+    elif options['format'] == 'aac':
+        ffmpeg_args += '-c:a aac '
+        if options['bitrate_type'] == 'cbr':
+            ffmpeg_args += '-b:a ' + options['bitrate'] + 'k'
+
+        if options['bitrate_type'] == 'vbr':
+            if bitrate >= 250:
+                quality = '2'
+            elif bitrate in range(70, 250):
+                # Ffmpeg allows args from 0.1 to 2 for AAC. Assuming this scale is linear, this takes the sensible
+                # bitrates between those values and uses a regression and rounding to get a value between 0.1 and 2
+                quality = round(-0.638889 + 0.0105556 * bitrate, 2)
+            else:
+                quality = '0.1'
+            ffmpeg_args += '-q:a ' + quality
+
+    return ffmpeg_args

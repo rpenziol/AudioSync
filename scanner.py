@@ -72,8 +72,9 @@ class Scanner(object):
                 input_file = os.path.join(input_path, item)
                 output_file = os.path.join(output_path, item)
 
-                if input_extension == '.flac':
-                    output_filename = base_filename + '.' + self.options['format']
+                # Adjust output file extension if it is going to be converted
+                if input_extension.lstrip('.') in self.options['extensions_to_convert']:
+                    output_filename = base_filename + '.' + self.options['extension']
                     output_file = os.path.join(output_path, output_filename)
 
                 self.converter.queue_job(input_file, output_file)
