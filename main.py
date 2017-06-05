@@ -38,6 +38,11 @@ except Exception as e:
     log.fatal("Invalid number of threads: '%s'." % config['ADVANCE']['thread_count'])
     exit(1)
 
+# Parse match_method type
+if not (config['ADVANCE']['match_method'] == 'date_size' or config['ADVANCE']['match_method'] == 'hash'):
+    log.fatal("Invalid match method: '%s'. Valid options: 'date_size' or 'hash'" % config['ADVANCE']['match_method'])
+    exit(1)
+
 # Parse extensions to ignore completely
 extensions_to_ignore = []
 if config['ADVANCE']['extensions_to_ignore'] != '':
@@ -64,6 +69,7 @@ options = {
     'extensions_to_convert': config['AUDIO']['extensions_to_convert'].split(','),  # Create list
     'ffmpeg_path': config['PATH']['ffmpeg'],
     'thread_count': thread_count,
+    'match_method': config['ADVANCE']['match_method'],
     'extensions_to_ignore': extensions_to_ignore,
     'extension': extension,
     'custom_command': custom_command

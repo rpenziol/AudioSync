@@ -40,20 +40,20 @@ class Database(object):
         self.db = TinyDB(db_full_path)
 
     ''' Take key/value pair and store/update value in database '''
-    def update(self, path='', hash=''):
+    def update(self, path='', hash='', mtime='', size=0):
         file = Query()
         # If file hash is present, update the hash
         if self.db.count(file.path == path) >= 1:
-            self.db.update({'path': path, 'hash': hash}, file.path == path)
+            self.db.update({'path': path, 'hash': hash, 'mtime': mtime, 'size': size}, file.path == path)
         # Otherwise insert the hash for the 1st time
         else:
-            self.db.insert({'path': path, 'hash': hash})
+            self.db.insert({'path': path, 'hash': hash, 'mtime': mtime, 'size': size})
 
     ''' Lookup key in database, return value '''
-    def get_hash(self, path=''):
-        file_hash = ''
+    def get_property(self, path='', property=''):
+        file_property = ''
         file = Query()
         # Get hash if path in db, else return empty string
         if self.db.count(file.path == path) >= 1:
-            file_hash = self.db.search(file.path == path)[0]['hash']
-        return file_hash
+            file_property = self.db.search(file.path == path)[0][property]
+        return file_property

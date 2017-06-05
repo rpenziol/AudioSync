@@ -26,6 +26,8 @@ class Converter(object):
         file = {
             'input_file': input_file,
             'output_file': output_file,
+            # These must be added to every item in the 'files' list due to Windows being unable to access global
+            # variables in a process spawned from 'multiprocess', and they must be accessible to convert()
             'ffmpeg_path': options['ffmpeg_path'],
             'ffmpeg_args': ffmpeg_arg_generator(),
             'custom_command': options['custom_command']
@@ -37,37 +39,49 @@ class Converter(object):
             fqfn_input = file['input_file']
             fqfn_output = file['output_file']
             fqfn_input_base, input_extension = os.path.splitext(fqfn_input)
-            fqfn_input_md5 = hashlib.md5(open(fqfn_input, 'rb').read()).hexdigest()
-            hash_match = False
+            fqfn_input_md5 = 0
+            fqfn_input_mtime = os.path.getmtime(fqfn_input)
+            fqfn_input_size = os.path.getsize(fqfn_input)
+            match = False
             output_exists = False
 
-            # Check if input file hash matches in database
-            if self.db.get_hash(fqfn_input) == fqfn_input_md5:
-                hash_match = True
+            # Process file matches either on date modified & size, or by hash
+            if options['match_method'] == 'date_size':
+                # Check if input file matches in database
+                if self.db.get_property(fqfn_input, 'mtime') == fqfn_input_mtime \
+                        and self.db.get_property(fqfn_input, 'size') == fqfn_input_size:
+                    match = True
+            elif options['match_method'] == 'hash':
+                fqfn_input_md5 = hashlib.md5(open(fqfn_input, 'rb').read()).hexdigest()
+                if self.db.get_hash(fqfn_input) == fqfn_input_md5:
+                    match = True
+            else:
+                log.fatal("No match method set.")
+                exit(1)
 
             # Check if output file exists
             if os.path.isfile(fqfn_output):
                 output_exists = True
 
             # Output file up-to-date
-            if hash_match and output_exists:
+            if match and output_exists:
                 log.debug("Output file '%s' up-to-date. Skipping." % fqfn_output)
                 continue
 
             # Output file removed
-            if hash_match and not output_exists:
+            if match and not output_exists:
                 log.debug("Output file '%s' has been removed. Reprocessing." % fqfn_output)
 
             # Output file outdated
-            if not hash_match and output_exists:
+            if not match and output_exists:
                 log.debug("Output file '%s' is outdated. Deleting and reprocessing." % fqfn_output)
                 os.remove(fqfn_output)
-                self.db.update(fqfn_input, fqfn_input_md5)
+                self.db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
 
             # New input file
-            if not hash_match and not output_exists:
+            if not match and not output_exists:
                 log.debug("Input file '%s' is new. Adding to processing list." % fqfn_input)
-                self.db.update(fqfn_input, fqfn_input_md5)
+                self.db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
 
             # Simply copy non-audio files
             if input_extension.lstrip('.') not in options['extensions_to_convert']:
@@ -106,8 +120,8 @@ def convert(job):
 
         if custom_command != '':
             command_list = custom_command.split()
-            command_list[command_list.index('[INPUT]')] = fqfn_input
-            command_list[command_list.index('[OUTPUT]')] = fqfn_output
+            command_list[command_list.index('[INPUT]')] = fqfn_input  # Replace index with [INPUT] to actual path
+            command_list[command_list.index('[OUTPUT]')] = fqfn_output  # Replace index with [OUTPUT] to actual path
         else:
             command_list = [ffmpeg_path, "-i", fqfn_input]
             command_list.extend(ffmpeg_args)
