@@ -1,4 +1,5 @@
 import os
+import subprocess
 import logging
 import shutil
 import hashlib
@@ -7,7 +8,6 @@ from multiprocessing import Pool
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 options = {}
-ffmpeg_args = ''
 
 
 class Converter(object):
@@ -25,7 +25,10 @@ class Converter(object):
     def queue_job(self, input_file, output_file):
         file = {
             'input_file': input_file,
-            'output_file': output_file
+            'output_file': output_file,
+            'ffmpeg_path': options['ffmpeg_path'],
+            'ffmpeg_args': ffmpeg_arg_generator(),
+            'custom_command': options['custom_command']
         }
         self.files.append(file)
 
@@ -78,8 +81,6 @@ class Converter(object):
 
             self.jobs.append(file)
         # End for
-        global ffmpeg_args
-        ffmpeg_args = ffmpeg_arg_generator()
 
         pool = Pool(processes=options['thread_count'])
         pool.map(convert, self.jobs)
@@ -95,20 +96,25 @@ allowed one input variable.'''
 def convert(job):
     fqfn_input = job['input_file']
     fqfn_output = job['output_file']
-    global ffmpeg_args
+    ffmpeg_path = job['ffmpeg_path']
+    custom_command = job['custom_command']
+    ffmpeg_args = job['ffmpeg_args']
 
     # Do the conversion
     try:
         log.info("Converting file '%s'." % fqfn_input)
-        if options['custom_command'] != '':
-            first = options['custom_command'].rsplit('[INPUT]')[0]  # Before INPUT file
-            second = options['custom_command'].split('[INPUT]')[1].rsplit('[OUTPUT]')[0]  # After INPUT & before OUTPUT
-            third = options['custom_command'].split('[INPUT]')[1].rsplit('[OUTPUT]')[1]  # After OUTPUT
-            command = first + shlex.quote(fqfn_input) + second + shlex.quote(fqfn_output) + third
+
+        if custom_command != '':
+            command_list = custom_command.split()
+            command_list[command_list.index('[INPUT]')] = fqfn_input
+            command_list[command_list.index('[OUTPUT]')] = fqfn_output
         else:
-            command = 'ffmpeg -i ' + shlex.quote(fqfn_input) + ' ' + ffmpeg_args + ' ' + shlex.quote(fqfn_output)\
-                  + '>/dev/null 2>&1'
-        os.system(command)
+            command_list = [ffmpeg_path, "-i", fqfn_input]
+            command_list.extend(ffmpeg_args)
+            command_list.append(fqfn_output)
+
+        FNULL = open(os.devnull, 'w')  # Redirect FFMPEG output to /dev/null
+        subprocess.call(command_list, stdout=FNULL, stderr=FNULL, shell=False)
         return
     except Exception as e:
         print(e)
@@ -121,12 +127,12 @@ command-line arguments based on the given codec / bitrate configuration'''
 
 def ffmpeg_arg_generator():
     global options
-    ffmpeg_args = ''
+    ffmpeg_args = []
     bitrate = int(options['bitrate'])
 
     if options['format'] == 'mp3':
         if options['bitrate_type'] == 'cbr':
-            ffmpeg_args += '-b:a ' + options['bitrate'] + 'k'
+            ffmpeg_args.extend(['-b:a', options['bitrate'] + 'k'])
 
         if options['bitrate_type'] == 'vbr':
             if bitrate >= 250:
@@ -149,12 +155,12 @@ def ffmpeg_arg_generator():
                 quality = '8'
             else:
                 quality = '9'
-            ffmpeg_args += '-q:a ' + quality
+            ffmpeg_args.extend(['-q:a', quality])
 
     elif options['format'] == 'aac':
-        ffmpeg_args += '-c:a aac '
+        ffmpeg_args.extend(['-c:a aac '])
         if options['bitrate_type'] == 'cbr':
-            ffmpeg_args += '-b:a ' + options['bitrate'] + 'k'
+            ffmpeg_args.extend(['-b:a', options['bitrate'] + 'k'])
 
         if options['bitrate_type'] == 'vbr':
             if bitrate >= 250:
@@ -165,6 +171,6 @@ def ffmpeg_arg_generator():
                 quality = round(-0.638889 + 0.0105556 * bitrate, 2)
             else:
                 quality = '0.1'
-            ffmpeg_args += '-q:a ' + quality
+            ffmpeg_args.extend(['-q:a ', quality])
 
     return ffmpeg_args

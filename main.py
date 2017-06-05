@@ -15,9 +15,9 @@ config.read('config/config.ini')
 source_dir = expanduser(config['PATH']['input'])
 dest_dir = expanduser(config['PATH']['output'])
 
-# Parse extension
+# Set output extension based on codec used
 extension = config['AUDIO']['output_format']
-if config['AUDIO']['output_format'] == 'aac':
+if config['AUDIO']['output_format'] == 'aac' or config['AUDIO']['output_format'] == 'alac':
     extension = 'm4a'
 
 # Parse bitrate type
@@ -38,6 +38,11 @@ except Exception as e:
     log.fatal("Invalid number of threads: '%s'." % config['ADVANCE']['thread_count'])
     exit(1)
 
+# Parse extensions to ignore completely
+extensions_to_ignore = []
+if config['ADVANCE']['extensions_to_ignore'] != '':
+    extensions_to_ignore = config['ADVANCE']['extensions_to_ignore'].split(',') # Create list
+
 # Parse custom command
 custom_command = ''
 if config['ADVANCE']['enable_custom_command'] == 'true':
@@ -57,7 +62,9 @@ options = {
     'bitrate': config['AUDIO']['bitrate'],
     'bitrate_type': config['AUDIO']['bitrate_type'],
     'extensions_to_convert': config['AUDIO']['extensions_to_convert'].split(','),  # Create list
+    'ffmpeg_path': config['PATH']['ffmpeg'],
     'thread_count': thread_count,
+    'extensions_to_ignore': extensions_to_ignore,
     'extension': extension,
     'custom_command': custom_command
 }
