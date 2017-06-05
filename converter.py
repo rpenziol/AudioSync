@@ -100,7 +100,13 @@ def convert(job):
     # Do the conversion
     try:
         log.info("Converting file '%s'." % fqfn_input)
-        command = 'ffmpeg -i ' + shlex.quote(fqfn_input) + ' ' + ffmpeg_args + ' ' + shlex.quote(fqfn_output)\
+        if options['custom_command'] != '':
+            first = options['custom_command'].rsplit('[INPUT]')[0]  # Before INPUT file
+            second = options['custom_command'].split('[INPUT]')[1].rsplit('[OUTPUT]')[0]  # After INPUT & before OUTPUT
+            third = options['custom_command'].split('[INPUT]')[1].rsplit('[OUTPUT]')[1]  # After OUTPUT
+            command = first + shlex.quote(fqfn_input) + second + shlex.quote(fqfn_output) + third
+        else:
+            command = 'ffmpeg -i ' + shlex.quote(fqfn_input) + ' ' + ffmpeg_args + ' ' + shlex.quote(fqfn_output)\
                   + '>/dev/null 2>&1'
         os.system(command)
         return
