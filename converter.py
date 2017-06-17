@@ -101,6 +101,9 @@ class Converter(object):
         pool.close()
         pool.join()
 
+        # Empty list of files. Allows 'process_queue' to be called in succession on same instance of Converter class
+        self.files = []
+
 
 '''Converts files using the command line and ffmpeg. Called in a pool as a multiprocess, meaning multiple copies
 of these function may run concurrently. Due to constraints of the multiprocessing pool, this function is only 
