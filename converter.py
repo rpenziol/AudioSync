@@ -172,7 +172,7 @@ def ffmpeg_arg_generator():
             ffmpeg_args.extend(['-q:a', quality])
 
     elif options['format'] == 'aac':
-        ffmpeg_args.extend(['-c:a aac '])
+        ffmpeg_args.extend(['-c:a', 'aac'])
         if options['bitrate_type'] == 'cbr':
             ffmpeg_args.extend(['-b:a', options['bitrate'] + 'k'])
 
