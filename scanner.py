@@ -11,18 +11,20 @@ class Scanner(object):
 
     # Attributes:
     source_dir = None
-    dest_dis = None
+    dest_dir = None
     options = None
     converter = None
     db = None
 
-    def __init__(self, source_dir, dest_dis, options):
+    def __init__(self, source_dir, dest_dir, options):
         self.source_dir = source_dir
-        self.dest_dis = dest_dis
+        self.dest_dir = dest_dir
         self.db = database.Database(source_dir)
         self.options = options
         self.converter = converter.Converter(self.db, self.options)
-        self.tree_scanner(source_dir, dest_dis)
+
+    def run(self):
+        self.tree_scanner(self.source_dir, self.dest_dir)
 
     ''' Recursively scans input directory structure and compares to the destination folder tree.
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
@@ -63,26 +65,7 @@ class Scanner(object):
 
             # Convert files in current directory
             for item in os.listdir(input_path):
-                if not os.path.isfile(os.path.join(input_path, item)):
-                    log.debug("'%s' is a directory. Skipping conversion." % item)
-                    continue
-
-                # Create full file path for input and output
-                base_filename, input_extension = os.path.splitext(item)
-                input_file = os.path.join(input_path, item)
-                output_file = os.path.join(output_path, item)
-
-                # Skip ignored extensions completely
-                if len(self.options['extensions_to_ignore']) > 0 \
-                        and input_extension.lstrip('.') in self.options['extensions_to_ignore']:
-                    continue
-
-                # Adjust output file extension if it is going to be converted
-                if input_extension.lstrip('.') in self.options['extensions_to_convert']:
-                    output_filename = base_filename + '.' + self.options['extension']
-                    output_file = os.path.join(output_path, output_filename)
-
-                self.converter.queue_job(input_file, output_file)
+                self.queue_file(input_path, output_path, item)
 
     ''' Remove folder trees from output_path if folder isn't in input_path'''
     def remove_orphan_dirs(self, input_path='', output_path=''):
@@ -123,3 +106,30 @@ class Scanner(object):
                     except Exception as e:
                         print(e)
                         log.warning("Failed to remove file '{0}'.".format(os.path.join(output_path, item)))
+
+    ''' Add file to process queue if it meets conversion criteria '''
+    def queue_file(self, input_path, output_path, item):
+        if not os.path.isfile(os.path.join(input_path, item)):
+            log.debug("'%s' is a directory. Skipping conversion." % item)
+            return
+
+        # Create full file path for input and output
+        base_filename, input_extension = os.path.splitext(item)
+        input_file = os.path.join(input_path, item)
+        output_file = os.path.join(output_path, item)
+
+        # Skip ignored extensions completely
+        if len(self.options['extensions_to_ignore']) > 0 \
+                and input_extension.lstrip('.') in self.options['extensions_to_ignore']:
+            return
+
+        # Adjust output file extension if it is going to be converted
+        if input_extension.lstrip('.') in self.options['extensions_to_convert']:
+            output_filename = base_filename + '.' + self.options['extension']
+            output_file = os.path.join(output_path, output_filename)
+
+        self.converter.queue_job(input_file, output_file)
+
+    ''' Wrapper function to call converter's process queue function'''
+    def process_queue(self):
+        self.converter.process_queue()
