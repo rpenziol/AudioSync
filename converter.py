@@ -59,9 +59,11 @@ class Converter(object):
                 log.fatal("No match method set.")
                 exit(1)
 
-            # Check if output file exists
+            # Check if output file exists and is non-zero size
             if os.path.isfile(fqfn_output):
                 output_exists = True
+                if os.path.getsize(fqfn_output) == 0:
+                    match = False
 
             # Output file up-to-date
             if match and output_exists:
@@ -144,7 +146,7 @@ command-line arguments based on the given codec / bitrate configuration'''
 
 def ffmpeg_arg_generator():
     global options
-    ffmpeg_args = []
+    ffmpeg_args = ['-vf', 'scale=-2:500'] # Scale album art to height of 500px
     bitrate = int(options['bitrate'])
 
     if options['format'] == 'mp3':

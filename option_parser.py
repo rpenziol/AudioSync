@@ -45,7 +45,7 @@ def options():
     # Parse extensions to ignore completely
     extensions_to_ignore = []
     if config['ADVANCE']['extensions_to_ignore'] != '':
-        extensions_to_ignore = config['ADVANCE']['extensions_to_ignore'].split(',') # Create list
+        extensions_to_ignore = config['ADVANCE']['extensions_to_ignore'].split(', ')  # Create list
 
     # Parse custom command
     custom_command = ''

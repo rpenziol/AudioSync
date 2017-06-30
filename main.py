@@ -29,8 +29,8 @@ if '--purge' in sys.argv:
 def main():
     scan = scanner.Scanner(input_dir, output_dir, options)
     scan.run()
-    mon = monitor.Watcher(input_dir, output_dir, options)
-    mon.run()
+    #mon = monitor.Watcher(input_dir, output_dir, options)
+    #mon.run()
 
 if __name__ == "__main__":
     main()

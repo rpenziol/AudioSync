@@ -119,8 +119,8 @@ class Scanner(object):
         output_file = os.path.join(output_path, item)
 
         # Skip ignored extensions completely
-        if len(self.options['extensions_to_ignore']) > 0 \
-                and input_extension.lstrip('.') in self.options['extensions_to_ignore']:
+        if len(self.options['extensions_to_ignore']) > 0 and \
+                (input_extension.lstrip('.') in self.options['extensions_to_ignore']):
             return
 
         # Adjust output file extension if it is going to be converted
