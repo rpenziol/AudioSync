@@ -20,6 +20,20 @@ def options():
         extension = 'm4a'
 
     # Parse bitrate type
+    sample_rate = '44100'
+    if config['AUDIO']['sample_rate'] == 'unchanged':
+        sample_rate = None
+    else:
+        try:
+            if int(config['AUDIO']['sample_rate']) > 0 and int(config['AUDIO']['sample_rate']) <= 5644800:
+                sample_rate = config['AUDIO']['sample_rate']
+        except Exception as ex:
+            log.fatal("Unsupported sample_rate: '%s'. "
+                      "Valid options are 'unchanged' or a number between 1 and 5644800, inclusive."
+                      % config['AUDIO']['sample_rate'])
+            exit(1)
+
+    # Parse sample rate
     if not (config['AUDIO']['bitrate_type'] == 'vbr' or config['AUDIO']['bitrate_type'] == 'cbr'):
         log.fatal("Invalid bitrate type: '%s'. Valid options: 'cbr' or 'vbr'" % config['AUDIO']['bitrate_type'])
         exit(1)
@@ -65,6 +79,7 @@ def options():
         'format': config['AUDIO']['output_format'],
         'bitrate': config['AUDIO']['bitrate'],
         'bitrate_type': config['AUDIO']['bitrate_type'],
+        'sample_rate': sample_rate,
         'extensions_to_convert': config['AUDIO']['extensions_to_convert'].split(','),  # Create list
         'ffmpeg_path': config['PATH']['ffmpeg'],
         'thread_count': thread_count,

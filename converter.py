@@ -146,7 +146,10 @@ command-line arguments based on the given codec / bitrate configuration'''
 
 def ffmpeg_arg_generator():
     global options
-    ffmpeg_args = ['-vf', 'scale=-2:500'] # Scale album art to height of 500px
+    ffmpeg_args = ['-vf', 'scale=-2:500']  # Scale album art to height of 500px
+    if options['sample_rate']:
+        ffmpeg_args.extend(['-ar', options['sample_rate']])
+
     bitrate = int(options['bitrate'])
 
     if options['format'] == 'mp3':
