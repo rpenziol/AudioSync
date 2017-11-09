@@ -21,6 +21,7 @@ class Converter(object):
         self.db = db
         global options
         options = init_options
+        self.ffmpeg_args = ffmpeg_arg_generator()
 
     def queue_job(self, input_file, output_file):
         file = {
@@ -29,7 +30,7 @@ class Converter(object):
             # These must be added to every item in the 'files' list due to Windows being unable to access global
             # variables in a process spawned from 'multiprocess', and they must be accessible to convert()
             'ffmpeg_path': options['ffmpeg_path'],
-            'ffmpeg_args': ffmpeg_arg_generator(),
+            'ffmpeg_args': self.ffmpeg_args,
             'custom_command': options['custom_command']
         }
         self.files.append(file)
