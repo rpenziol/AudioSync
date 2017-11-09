@@ -2,7 +2,6 @@ import multiprocessing
 import logging
 import configparser
 from os.path import expanduser
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

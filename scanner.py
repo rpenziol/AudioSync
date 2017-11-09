@@ -3,7 +3,6 @@ import converter
 import shutil
 import database
 import logging
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

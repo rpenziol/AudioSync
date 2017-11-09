@@ -5,7 +5,6 @@ import shutil
 import hashlib
 import shlex
 from multiprocessing import Pool
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 options = {}
 

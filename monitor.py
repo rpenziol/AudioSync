@@ -4,7 +4,6 @@ import logging
 import scanner
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

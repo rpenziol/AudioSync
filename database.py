@@ -2,7 +2,6 @@ import os.path
 import logging
 import hashlib
 from tinydb import TinyDB, Query
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 

@@ -5,7 +5,7 @@ import logging
 import monitor
 import scanner
 import option_parser
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 options = option_parser.options()
