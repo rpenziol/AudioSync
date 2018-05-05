@@ -7,14 +7,6 @@ log = logging.getLogger(__name__)
 
 
 class Scanner(object):
-
-    # Attributes:
-    source_dir = None
-    dest_dir = None
-    options = None
-    converter = None
-    db = None
-
     def __init__(self, source_dir, dest_dir, options):
         self.source_dir = source_dir
         self.dest_dir = dest_dir
@@ -29,7 +21,7 @@ class Scanner(object):
     Creates missing directories in destination folder, calls dir_scanner to queue conversions, then processes queue '''
     def tree_scanner(self, source_dir='', dest_dir=''):
         if not os.path.exists(source_dir):
-            log.fatal("Source directory '%s' doesn't exist. Exiting." % source_dir)
+            log.fatal("Source directory '{0}' doesn't exist. Exiting.".format(source_dir))
             exit()
 
         for root, dirs, files_junk in os.walk(source_dir, topdown=True):
@@ -41,15 +33,15 @@ class Scanner(object):
 
                 # Create directory
                 if not os.path.exists(output_path):
-                    log.info("Directory '%s' does't exist. Creating directory" % output_path)
+                    log.info("Directory '{0}' does't exist. Creating directory".format(output_path))
                     try:
                         os.makedirs(output_path)
                     except Exception as e:
                         print(e)
-                        log.warning("Insufficient privileges to create directory '%s'." % output_path)
+                        log.warning("Insufficient privileges to create directory '{0}'.".format(output_path))
 
                 else:
-                    log.debug("Directory '%s' already exist. Skipping directory creation." % output_path)
+                    log.debug("Directory '{0}' already exist. Skipping directory creation.".format(output_path))
 
                 self.dir_scanner(input_path, output_path)
         # Make the magic happen
@@ -67,7 +59,8 @@ class Scanner(object):
                 self.queue_file(input_path, output_path, item)
 
     ''' Remove folder trees from output_path if folder isn't in input_path'''
-    def remove_orphan_dirs(self, input_path='', output_path=''):
+    @staticmethod
+    def remove_orphan_dirs(input_path='', output_path=''):
         for item in os.listdir(output_path):
             # If item is a directory
             if not os.path.isfile(os.path.join(output_path, item)):
@@ -81,7 +74,8 @@ class Scanner(object):
                         log.warning("Failed to remove folder '{0}'.".format(os.path.join(output_path, item)))
 
     ''' Remove files from output_path if file isn't in input_path'''
-    def remove_orphan_files(self, input_path='', output_path=''):
+    @staticmethod
+    def remove_orphan_files(input_path='', output_path=''):
         # Store list of file names (without extensions) from input_path
         input_files = []
 
@@ -109,7 +103,7 @@ class Scanner(object):
     ''' Add file to process queue if it meets conversion criteria '''
     def queue_file(self, input_path, output_path, item):
         if not os.path.isfile(os.path.join(input_path, item)):
-            log.debug("'%s' is a directory. Skipping conversion." % item)
+            log.debug("'{0}' is a directory. Skipping conversion.".format(item))
             return
 
         # Create full file path for input and output
@@ -119,11 +113,11 @@ class Scanner(object):
 
         # Skip ignored extensions completely
         if len(self.options['extensions_to_ignore']) > 0 and \
-                (input_extension.lstrip('.') in self.options['extensions_to_ignore']):
+                (input_extension.lstrip('.').lower() in self.options['extensions_to_ignore']):
             return
 
         # Adjust output file extension if it is going to be converted
-        if input_extension.lstrip('.') in self.options['extensions_to_convert']:
+        if input_extension.lstrip('.').lower() in self.options['extensions_to_convert']:
             output_filename = base_filename + '.' + self.options['extension']
             output_file = os.path.join(output_path, output_filename)
 

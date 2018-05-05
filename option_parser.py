@@ -10,9 +10,6 @@ def options():
     config = configparser.ConfigParser()
     config.read('config/config.ini')
 
-    source_dir = expanduser(config['PATH']['input'])
-    dest_dir = expanduser(config['PATH']['output'])
-
     # Set output extension based on codec used
     extension = config['AUDIO']['output_format']
     if config['AUDIO']['output_format'] == 'aac' or config['AUDIO']['output_format'] == 'alac':
@@ -24,17 +21,17 @@ def options():
         sample_rate = None
     else:
         try:
-            if int(config['AUDIO']['sample_rate']) > 0 and int(config['AUDIO']['sample_rate']) <= 5644800:
+            if 0 < int(config['AUDIO']['sample_rate']) <= 5644800:
                 sample_rate = config['AUDIO']['sample_rate']
         except Exception as ex:
-            log.fatal("Unsupported sample_rate: '%s'. "
-                      "Valid options are 'unchanged' or a number between 1 and 5644800, inclusive."
-                      % config['AUDIO']['sample_rate'])
+            log.fatal("Unsupported sample_rate: '{0}'. "
+                      "Valid options are 'unchanged' or a number between 1 and 5644800, inclusive.".format(
+                        config['AUDIO']['sample_rate']))
             exit(1)
 
     # Parse sample rate
     if not (config['AUDIO']['bitrate_type'] == 'vbr' or config['AUDIO']['bitrate_type'] == 'cbr'):
-        log.fatal("Invalid bitrate type: '%s'. Valid options: 'cbr' or 'vbr'" % config['AUDIO']['bitrate_type'])
+        log.fatal("Invalid bitrate type: '{0}'. Valid options: 'cbr' or 'vbr'".format(config['AUDIO']['bitrate_type']))
         exit(1)
 
     # Parse thread count
@@ -47,18 +44,19 @@ def options():
         else:
             thread_count = int(config['ADVANCE']['thread_count'])
     except Exception as e:
-        log.fatal("Invalid number of threads: '%s'." % config['ADVANCE']['thread_count'])
+        log.fatal("Invalid number of threads: '{0}'.".format(config['ADVANCE']['thread_count']))
         exit(1)
 
     # Parse match_method type
     if not (config['ADVANCE']['match_method'] == 'date_size' or config['ADVANCE']['match_method'] == 'hash'):
-        log.fatal("Invalid match method: '%s'. Valid options: 'date_size' or 'hash'" % config['ADVANCE']['match_method'])
+        log.fatal("Invalid match method: '{0}'. Valid options: 'date_size' or 'hash'".format(
+            config['ADVANCE']['match_method']))
         exit(1)
 
     # Parse extensions to ignore completely
     extensions_to_ignore = []
     if config['ADVANCE']['extensions_to_ignore'] != '':
-        extensions_to_ignore = config['ADVANCE']['extensions_to_ignore'].split(', ')  # Create list
+        extensions_to_ignore = config['ADVANCE']['extensions_to_ignore'].lower().split(', ')  # Create list
 
     # Parse custom command
     custom_command = ''
@@ -74,12 +72,12 @@ def options():
             log.fatal("Custom command does not contain [OUTPUT] string argument.")
             exit(1)
 
-    options = {
+    opt = {
         'format': config['AUDIO']['output_format'],
         'bitrate': config['AUDIO']['bitrate'],
         'bitrate_type': config['AUDIO']['bitrate_type'],
         'sample_rate': sample_rate,
-        'extensions_to_convert': config['AUDIO']['extensions_to_convert'].split(','),  # Create list
+        'extensions_to_convert': config['AUDIO']['extensions_to_convert'].lower().split(','),
         'ffmpeg_path': config['PATH']['ffmpeg'],
         'thread_count': thread_count,
         'match_method': config['ADVANCE']['match_method'],
@@ -88,7 +86,7 @@ def options():
         'custom_command': custom_command
     }
 
-    return options
+    return opt
 
 
 def input_dir():

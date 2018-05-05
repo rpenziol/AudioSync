@@ -3,7 +3,6 @@ import subprocess
 import logging
 import shutil
 import hashlib
-import shlex
 from multiprocessing import Pool
 log = logging.getLogger(__name__)
 options = {}
@@ -67,36 +66,35 @@ class Converter(object):
 
             # Output file up-to-date
             if match and output_exists:
-                log.debug("Output file '%s' up-to-date. Skipping." % fqfn_output)
+                log.debug("Output file '{0}' up-to-date. Skipping.".format(fqfn_output))
                 continue
 
             # Output file removed
             if match and not output_exists:
-                log.debug("Output file '%s' has been removed. Reprocessing." % fqfn_output)
+                log.debug("Output file '{0}' has been removed. Reprocessing.".format(fqfn_output))
 
             # Output file outdated
             if not match and output_exists:
-                log.debug("Output file '%s' is outdated. Deleting and reprocessing." % fqfn_output)
+                log.debug("Output file '{0}' is outdated. Deleting and reprocessing.".format(fqfn_output))
                 os.remove(fqfn_output)
                 self.db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
 
             # New input file
             if not match and not output_exists:
-                log.debug("Input file '%s' is new. Adding to processing list." % fqfn_input)
+                log.debug("Input file '{0}' is new. Adding to processing list.".format(fqfn_input))
                 self.db.update(fqfn_input, fqfn_input_md5, fqfn_input_mtime, fqfn_input_size)
 
             # Simply copy non-audio files
-            if input_extension.lstrip('.') not in options['extensions_to_convert']:
+            if input_extension.lstrip('.').lower() not in options['extensions_to_convert']:
                 try:
-                    log.info("Copying '%s' to '%s'" % (fqfn_input, fqfn_output))
+                    log.info("Copying '{0}' to '{0}'".format((fqfn_input, fqfn_output)))
                     shutil.copy2(fqfn_input, fqfn_output)
                     continue  # No need to add to convert queue
                 except Exception as e:
                     print(e)
-                    log.warning("Unable to copy file: '%s'." % fqfn_output)
+                    log.warning("Unable to copy file: '{0}'.".format(fqfn_output))
 
             self.jobs.append(file)
-        # End for
 
         pool = Pool(processes=options['thread_count'])
         pool.map(convert, self.jobs)
@@ -121,7 +119,7 @@ def convert(job):
 
     # Do the conversion
     try:
-        log.info("Converting file '%s'." % fqfn_input)
+        log.info("Converting file '{0}'.".format(fqfn_input))
 
         if custom_command != '':
             command_list = custom_command.split()
@@ -132,12 +130,12 @@ def convert(job):
             command_list.extend(ffmpeg_args)
             command_list.append(fqfn_output)
 
-        FNULL = open(os.devnull, 'w')  # Redirect FFMPEG output to /dev/null
-        subprocess.call(command_list, stdout=FNULL, stderr=FNULL, shell=False)
+        fnull = open(os.devnull, 'w')  # Redirect FFMPEG output to /dev/null
+        subprocess.call(command_list, stdout=fnull, stderr=fnull, shell=False)
         return
     except Exception as e:
         print(e)
-        log.warning("Failed to convert file: '%s'." % fqfn_output)
+        log.warning("Failed to convert file: '{0}'.".format(fqfn_output))
 
 
 '''Using the globaloptions variable, this function will generate and return the proper ffmpeg
