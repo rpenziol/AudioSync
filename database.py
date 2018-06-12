@@ -34,7 +34,7 @@ class Database(object):
             self._db.insert({'path': path, 'hash': hash, 'mtime': mtime, 'size': size})
 
     ''' Lookup key in database, return value '''
-    def get_property(self, path='', prop=''):
+    def get_property(self, path, prop):
         file_property = ''
         file = Query()
         if self._db.count(file.path == path) >= 1:

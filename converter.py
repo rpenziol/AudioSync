@@ -13,14 +13,14 @@ class Converter(object):
         self._jobs = []
         self._db = db
         self._options = options
-        self.ffmpeg_args = self.ffmpeg_arg_generator()
+        self._ffmpeg_args = self.ffmpeg_arg_generator()
 
     def queue_job(self, input_file, output_file):
         file = {
             'input_file': input_file,
             'output_file': output_file,
             'ffmpeg_path': self._options['ffmpeg_path'],
-            'ffmpeg_args': self.ffmpeg_args,
+            'ffmpeg_args': self._ffmpeg_args,
             'custom_command': self._options['custom_command']
         }
         self._files.append(file)
@@ -93,13 +93,13 @@ class Converter(object):
     def ffmpeg_arg_generator(self):
         ffmpeg_args = ['-vf', 'scale=-2:500']  # Scale album art to height of 500px
         if self._options['sample_rate']:
-            ffmpeg_args.extend(['-ar', self._options['sample_rate']])
+            ffmpeg_args.extend(['-ar', str(self._options['sample_rate'])])
 
         bitrate = int(self._options['bitrate'])
 
         if self._options['format'] == 'mp3':
             if self._options['bitrate_type'] == 'cbr':
-                ffmpeg_args.extend(['-b:a', self._options['bitrate'] + 'k'])
+                ffmpeg_args.extend(['-b:a', str(self._options['bitrate']) + 'k'])
 
             if self._options['bitrate_type'] == 'vbr':
                 if bitrate >= 250:
@@ -155,22 +155,16 @@ def convert(job):
     custom_command = job['custom_command']
     ffmpeg_args = job['ffmpeg_args']
 
-    try:
-        log.info('Converting file "{0}" to "{1}"'.format(fqfn_input, fqfn_output))
+    log.info('Converting file "{0}" to "{1}"'.format(fqfn_input, fqfn_output))
 
-        if custom_command != '':
-            command_list = custom_command.split()
-            command_list[command_list.index('[INPUT]')] = fqfn_input
-            command_list[command_list.index('[OUTPUT]')] = fqfn_output
-        else:
-            command_list = [ffmpeg_path, '-i', fqfn_input]
-            command_list.extend(ffmpeg_args)
-            command_list.append(fqfn_output)
+    if custom_command != '':
+        command_list = custom_command.split()
+        command_list[command_list.index('[INPUT]')] = fqfn_input
+        command_list[command_list.index('[OUTPUT]')] = fqfn_output
+    else:
+        command_list = [ffmpeg_path, '-i', fqfn_input]
+        command_list.extend(ffmpeg_args)
+        command_list.append(fqfn_output)
 
-        fnull = open(os.devnull, 'w')  # Redirect FFMPEG output to /dev/null
-        subprocess.call(command_list, stdout=fnull, stderr=fnull, shell=False)
-    except Exception as e:
-        print(e)
-        log.fatal('Failed to convert file: "{0}".'.format(fqfn_output))
-
-
+    fnull = open(os.devnull, 'w')  # Redirect FFMPEG output to /dev/null
+    subprocess.call(command_list, stdout=fnull, stderr=fnull, shell=False)
