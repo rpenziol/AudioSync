@@ -9,6 +9,7 @@ log = logging.getLogger(__name__)
 
 
 def main():
+    log.info('WELCOME TO AUDIOSYNC')
     options = option_parser.options()
     input_dir = option_parser.input_dir()
     output_dir = option_parser.output_dir()
