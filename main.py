@@ -26,6 +26,7 @@ def main():
                 shutil.rmtree(full_path)
 
     scanner.Scanner(input_dir, output_dir, options)
+    log.info('DONE SYNCING DIRECTORIES. EXITING.')
 
 
 if __name__ == '__main__':

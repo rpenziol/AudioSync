@@ -1,7 +1,7 @@
 path:
-  input: D:\My Music\
-  output: D:\MP3\
-  ffmpeg: D:\Dropbox\Apps\FFMPEG\ffmpeg.exe
+  input: /in/
+  output: /out/
+  ffmpeg: ffmpeg
 
 audio:
   output_format: mp3
