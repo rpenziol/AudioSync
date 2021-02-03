@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 def options():
     with open('config.yaml', 'r') as f:
-        config = yaml.load(f)
+        config = yaml.load(f, yaml.SafeLoader)
 
     # Set output extension based on codec used
     extension = config['audio']['output_format']
@@ -74,9 +74,9 @@ def options():
 
 def input_dir():
     with open('config.yaml', 'r') as f:
-        return expanduser(yaml.load(f)['path']['input'])
+        return expanduser(yaml.load(f, yaml.SafeLoader)['path']['input'])
 
 
 def output_dir():
     with open('config.yaml', 'r') as f:
-        return expanduser(yaml.load(f)['path']['output'])
+        return expanduser(yaml.load(f, yaml.SafeLoader)['path']['output'])
