@@ -3,10 +3,8 @@ FROM python:3.6
 COPY . /app
 WORKDIR /app
 
-RUN apt-get update
-RUN apt-get -y install ffmpeg
+RUN apt-get update && apt-get -y install ffmpeg
 
-RUN pip install pipenv
-RUN pipenv install --system --deploy
+RUN pip install -r requirements.txt
 
 CMD ["/bin/bash", "run.sh"]
