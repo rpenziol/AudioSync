@@ -20,8 +20,10 @@ spec:
    }
 
     parameters { 
-        string(name: 'DOCKER_REPOSITORY_STAGE', defaultValue: 'audiosync', description: 'Name of the image to be built for scanning (e.g.: rpenziol/audiosync-staging)') 
-        string(name: 'DOCKER_REPOSITORY_PROD', defaultValue: 'audiosync', description: 'Name of the image to be built for production (e.g.: rpenziol/audiosync)') 
+        string(name: 'DOCKER_REGISTRY_URL', defaultValue: 'https://ghcr.io', description: 'Docker image registry URL used for authentication') 
+        string(name: 'DOCKER_IMAGE_URL', defaultValue: 'ghcr.io/rpenziol/audiosync', description: 'Fully-qualified URL for the Docker image registry') 
+        string(name: 'PUBLISH_DOCKER_IMAGE', defaultValue: 'false', description: 'true/false whether to publish Docker image to Docker image registry') 
+        string(name: 'DOCKER_IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag') 
     }
     
     environment {
@@ -39,15 +41,18 @@ spec:
         stage('Build Image') {
             steps {
                 container("img") {
-                    sh "img build -f Dockerfile -t audiosync . -t ghcr.io/rpenziol/audiosync:latest"
+                    sh "img build -f Dockerfile -t audiosync . -t $params.DOCKER_IMAGE_URL:$params.DOCKER_IMAGE_TAG"
                 }
             }
         }
         stage('Push Production Image') {
+            when {
+                expression { params.PUBLISH_DOCKER_IMAGE == 'true' }
+            }
             steps {
                 container("img") {
-                    sh "img login https://ghcr.io -u $GITHUB_USR -p $GITHUB_PSW"
-                    sh "img push ghcr.io/rpenziol/audiosync:latest"
+                    sh "img login $params.DOCKER_REGISTRY_URL -u $GITHUB_USR -p $GITHUB_PSW"
+                    sh "img push $params.DOCKER_IMAGE_URL:$params.DOCKER_IMAGE_TAG"
                 }
             }
         }
